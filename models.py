@@ -11,16 +11,27 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SelectField, SubmitField
 from functools import wraps
 from flask import session, flash, redirect, url_for, render_template
+import os
+import pymysql  # Ensure you have pymysql installed
+
+# ✅ Use the Railway MySQL connection URL
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "mysql+pymysql://root:qnigrFgytUVoIaHtjBsoyMpEOLsuEJTJ@interchange.proxy.rlwy.net:35251/railway"
+)
+
+# ✅ Create MySQL Engine
+engine = create_engine(DATABASE_URL, echo=True)
+
+# ✅ Session Management
+SessionLocal = scoped_session(sessionmaker(bind=engine))
+db_session = SessionLocal()
+
+# ✅ Define Base for SQLAlchemy Models
+Base = declarative_base()
 
 defaultCode = "00001"
 defaultId = 1
-
-
-DATABASE_URL = 'sqlite:///dataQatables.db'
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
-SessionLocal = scoped_session(sessionmaker(bind=engine))
-db_session = SessionLocal()
-Base = declarative_base()
 
 
 
