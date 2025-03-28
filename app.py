@@ -1582,25 +1582,11 @@ def upload_image():
     st.subheader("📂 Uploaded Files")
     attachments = db_session.query(Attachments).all()
 
-
-
-    st.write("🔍 Checking attachments directory...")
-    st.write(f"Current Working Directory: {os.getcwd()}")  # Check current directory
-    st.write(f"Contents of Root: {os.listdir()}")  # Check if `attachments` exists
-
-    if os.path.exists("attachments"):
-        st.write("✅ Attachments folder exists!")
-        st.write(f"Contents: {os.listdir('attachments')}")
-    else:
-        st.write("❌ Attachments folder NOT found!")
-
     if not attachments:
         st.warning("No files uploaded yet.")
     else:
         for attachment in attachments:
-        
-            st.write(f"📄 Found File Path in DB: {attachment.file_path}")
-            st.write(f"Exists? {os.path.exists(attachment.file_path)}")
+
             with st.expander(f"📄 Attachment: {os.path.basename(attachment.file_path)}"):
                 # Display metadata
                 col1, col2 = st.columns(2)
@@ -1622,19 +1608,6 @@ def upload_image():
                     st.write("📄 PDF files cannot be previewed. Please download the file.")
                 elif file_ext in [".mp4", ".avi", ".mov"]:
                     st.video(attachment.file_path)
-
-
-                # Delete button
-                if st.button(f"❌ Delete {os.path.basename(attachment.file_path)}", key=f"delete_{attachment.id}"):
-                    try:
-                        # Delete the attachment from the database
-                        db_session.delete(attachment)
-                        db_session.commit()
-                        st.success(f"Attachment '{os.path.basename(attachment.file_path)}' deleted successfully!")
-                        st.rerun()  # ✅ More reliable than `experimental_rerun`
-                    except Exception as e:
-                        db_session.rollback()
-                        st.error(f"Error deleting attachment: {e}")
 
 
                 # ✅ FIX: Ensuring unique key for each download button
