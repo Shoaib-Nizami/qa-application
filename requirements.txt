@@ -19,5 +19,5 @@ flask-wtf
 wtforms
 werkzeug
 jwt
-dateutil
+python-dateutil
 requests
