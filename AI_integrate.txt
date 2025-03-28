@@ -1,0 +1,88 @@
+
+'''
+# Load API Key
+api_key = os.getenv("OPENAI_API_KEY")
+
+if not api_key:
+    raise ValueError("❌ OPENAI_API_KEY is not set. Please check your environment variables.")
+
+# OpenAI Client
+client = openai.OpenAI(api_key=api_key)
+
+# Function to handle API requests with retries
+def call_openai():
+    for attempt in range(3):  # Retry up to 3 times
+        try:
+            response = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[{"role": "user", "content": "Hello, how are you?"}],
+                max_tokens=50
+            )
+            return response.choices[0].message.content
+        except openai.RateLimitError:
+            print("⚠️ Rate limit reached. Retrying in 10 seconds...")
+            time.sleep(10)  # Wait before retrying
+        except openai.OpenAIError as e:
+            print(f"❌ OpenAI API Error: {e}")
+            return None  # Stop retrying on fatal errors
+    return None
+
+# Call the function
+result = call_openai()
+if result:
+    print(result)
+else:
+    print("❌ Failed to get a response from OpenAI.")
+
+response = openai.chat.completions.create(  # ✅ Correct method for latest versions
+    model="gpt-3.5-turbo",
+    messages=[
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": "Hello, how are you?"}
+    ],
+    max_tokens=50
+)
+
+print(response.choices[0].message.content)  # ✅ Correct way to access respons
+
+
+
+
+def generate_test_case_sentence(test_scenario, field_parent, field_child, detailed_input, add_urdu=False):
+    """Generates a structured sentence with AI-based context handling and optional Urdu translation."""
+
+    prepositions = ["using", "in", "on", "with", "for", "by"]
+    preposition1 = random.choice(prepositions)
+    preposition2 = random.choice(prepositions)
+
+    prompt = f"""
+    Generate a concise, structured test case sentence for the following details:
+
+    - **Scenario:** {test_scenario}
+    - **Field Parent:** {field_parent}
+    - **Field Child:** {field_child}
+    - **Detailed Input:** {detailed_input}
+
+    Ensure clarity and structure with auto-prepositions.
+    """
+
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[{"role": "user", "content": prompt}]
+        )
+        sentence = response["choices"][0]["message"]["content"].strip()
+
+    except Exception as e:
+        sentence = f"{test_scenario} {preposition1} {field_parent} {preposition2} {field_child}. {detailed_input}."
+
+    if add_urdu:
+        try:
+            urdu_translation = GoogleTranslator(source="auto", target="ur").translate(sentence)
+            return f"EN: {sentence}\n\nUR: {urdu_translation}"
+        except Exception as e:
+            return f"EN: {sentence}\n\nUR: Urdu translation not available."
+    else:
+        return sentence
+
+'''

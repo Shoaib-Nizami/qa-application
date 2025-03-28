@@ -1,0 +1,14 @@
+Option: Disable Foreign Key Checks and Delete Rows
+
+Disable Foreign Key Checks:
+PRAGMA foreign_keys = OFF;
+
+Re-enable Foreign Key Checks:
+PRAGMA foreign_keys = ON;
+
+
+
+
+
+
+
