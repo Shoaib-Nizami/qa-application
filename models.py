@@ -13,19 +13,44 @@ from functools import wraps
 from flask import session, flash, redirect, url_for, render_template
 import os
 import pymysql  # Ensure you have pymysql installed
+from sqlalchemy.pool import QueuePool
 
-# ✅ Use the Railway MySQL connection URL
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
     "mysql+pymysql://root:qnigrFgytUVoIaHtjBsoyMpEOLsuEJTJ@interchange.proxy.rlwy.net:35251/railway"
 )
 
-# ✅ Create MySQL Engine
-engine = create_engine(DATABASE_URL, echo=True)
+engine = create_engine(
+    DATABASE_URL, 
+    echo=True,
+    poolclass=QueuePool,  # Use connection pooling
+    pool_size=10,         # Number of connections in the pool
+    max_overflow=20,      # Allow extra connections if needed
+    pool_recycle=1800,    # Recycle connections every 30 minutes
+    pool_pre_ping=True    # Checks if connection is alive before using
+)
 
 # ✅ Session Management
 SessionLocal = scoped_session(sessionmaker(bind=engine))
-db_session = SessionLocal()
+
+
+def get_db_session(retries=3, delay=5):
+    """Returns a new database session with retry on failure."""
+    for attempt in range(retries):
+        try:
+            session = SessionLocal()
+            session.execute("SELECT 1")  # Test if connection is alive
+            return session
+        except OperationalError:
+            print(f"⚠️ Database connection lost. Retrying ({attempt+1}/{retries})...")
+            time.sleep(delay)  # Wait before retrying
+    raise OperationalError("❌ Unable to reconnect to database after multiple attempts.")
+
+
+
+
+db_session = get_db_session()
+
 
 # ✅ Define Base for SQLAlchemy Models
 Base = declarative_base()
@@ -83,60 +108,40 @@ def validate_sequence(db_session, code_id: int):
     db_session.commit()
 
 # Modify the generate_sequential_code function
-def generate_sequential_code(db_session, created_by: str, max_retries: int = 5) -> str:
-    """
-    Generates a sequential 6-digit numeric code, logs it in TestCodeGeneration table,
-    and validates the sequence.
-    
-    Args:
-        db_session: SQLAlchemy database session.
-        created_by (str): Username of the user generating the code.
-        max_retries (int): Maximum number of retries if the database is locked.
-    
-    Returns:
-        str: A 6-digit code as a string (e.g., "000001", "000002").
-    """
+def generate_sequential_code(db_session, created_by: str, max_retries: 5) -> str:
     retries = 0
     while retries < max_retries:
         try:
-            # Fetch or create the counter record
             counter = db_session.query(Counter).first()
             if not counter:
                 counter = Counter(last_code="000000")
                 db_session.add(counter)
                 db_session.commit()
-            
-            # Increment the last code
+
             next_code = int(counter.last_code) + 1
-            
-            # Format the code as a 6-digit string with leading zeros
             next_code_str = f"{next_code:06}"
-            
-            # Log the generated code in TestCodeGeneration table
+
             test_code = TestCodeGeneration(
                 created_by=created_by,
                 code_number=next_code_str,
-                qa_status="Pending"  # Default status
+                qa_status="Pending"
             )
             db_session.add(test_code)
             db_session.commit()
-            
-            # Update the counter
+
             counter.last_code = next_code_str
             db_session.commit()
-            
-            # Validate the sequence and update qa_status
+
             validate_sequence(db_session, test_code.id)
-            
+
             return next_code_str
-        except OperationalError as e:
+        except OperationalError:
+            print(f"⚠️ MySQL connection lost. Retrying {retries+1}/{max_retries}...")
+            db_session.rollback()
+            time.sleep(2)  # Wait before retrying
             retries += 1
-            print(f"Database is locked. Retrying ({retries}/{max_retries})...")
-            time.sleep(0.1)  # Wait for 100ms before retrying
-        except Exception as e:
-            print(f"Error generating code: {e}")
-            raise
-    raise OperationalError("Failed to generate code after maximum retries.")
+
+    raise Exception("❌ Failed to generate code after multiple retries.")
 
 
 def update_counter(next_code_str):
