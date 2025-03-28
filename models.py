@@ -14,6 +14,7 @@ from flask import session, flash, redirect, url_for, render_template
 import os
 import pymysql  # Ensure you have pymysql installed
 from sqlalchemy.pool import QueuePool
+from sqlalchemy import text
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
@@ -39,7 +40,7 @@ def get_db_session(retries=3, delay=5):
     for attempt in range(retries):
         try:
             session = SessionLocal()
-            session.execute("SELECT 1")  # Test if connection is alive
+            session.execute(text("SELECT 1"))  # ✅ Fixed: Use text() wrapper
             return session
         except OperationalError:
             print(f"⚠️ Database connection lost. Retrying ({attempt+1}/{retries})...")
