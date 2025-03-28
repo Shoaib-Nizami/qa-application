@@ -21,3 +21,4 @@ werkzeug
 PyJWT
 python-dateutil
 requests
+pymysql
