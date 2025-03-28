@@ -1580,10 +1580,23 @@ def upload_image():
     st.subheader("📂 Uploaded Files")
     attachments = db_session.query(Attachments).all()
 
+    st.write("🔍 Checking attachments directory...")
+    st.write(f"Current Working Directory: {os.getcwd()}")  # Check current directory
+    st.write(f"Contents of Root: {os.listdir()}")  # Check if `attachments` exists
+    
+    if os.path.exists("attachments"):
+        st.write("✅ Attachments folder exists!")
+        st.write(f"Contents: {os.listdir('attachments')}")
+    else:
+        st.write("❌ Attachments folder NOT found!")
+    
     if not attachments:
         st.warning("No files uploaded yet.")
     else:
         for attachment in attachments:
+            st.write(f"📄 Found File Path in DB: {attachment.file_path}")
+            st.write(f"Exists? {os.path.exists(attachment.file_path)}")
+            
             with st.expander(f"📄 Attachment: {os.path.basename(attachment.file_path)}"):
                 # Display metadata
                 col1, col2 = st.columns(2)
