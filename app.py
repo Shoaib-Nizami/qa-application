@@ -1,3 +1,5 @@
+
+
 import plotly.express as px
 import time
 from sqlalchemy.orm import joinedload
@@ -1578,12 +1580,27 @@ def upload_image():
     """Displays uploaded files in an expandable section."""
     
     st.subheader("📂 Uploaded Files")
-    attachments = db_session.query(Attachments).all()    
+    attachments = db_session.query(Attachments).all()
+
+
+
+    st.write("🔍 Checking attachments directory...")
+    st.write(f"Current Working Directory: {os.getcwd()}")  # Check current directory
+    st.write(f"Contents of Root: {os.listdir()}")  # Check if `attachments` exists
+
+    if os.path.exists("attachments"):
+        st.write("✅ Attachments folder exists!")
+        st.write(f"Contents: {os.listdir('attachments')}")
+    else:
+        st.write("❌ Attachments folder NOT found!")
+
     if not attachments:
         st.warning("No files uploaded yet.")
     else:
         for attachment in attachments:
-            
+        
+            st.write(f"📄 Found File Path in DB: {attachment.file_path}")
+            st.write(f"Exists? {os.path.exists(attachment.file_path)}")
             with st.expander(f"📄 Attachment: {os.path.basename(attachment.file_path)}"):
                 # Display metadata
                 col1, col2 = st.columns(2)
@@ -1606,7 +1623,6 @@ def upload_image():
                 elif file_ext in [".mp4", ".avi", ".mov"]:
                     st.video(attachment.file_path)
 
-                # Here logic to be replaced
 
                 # Delete button
                 if st.button(f"❌ Delete {os.path.basename(attachment.file_path)}", key=f"delete_{attachment.id}"):
@@ -1621,7 +1637,15 @@ def upload_image():
                         st.error(f"Error deleting attachment: {e}")
 
 
-
+                # ✅ FIX: Ensuring unique key for each download button
+                with open(attachment.file_path, "rb") as f:
+                    st.download_button(
+                        label=f"📥 Download {os.path.basename(attachment.file_path)}",
+                        data=f,
+                        file_name=os.path.basename(attachment.file_path),
+                        mime="application/octet-stream",
+                        key=f"download_{attachment.id}"  # 🔥 Unique key to avoid duplicate ID error
+                    )
 
 
 # Current Page Session:
