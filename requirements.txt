@@ -1,1 +1,24 @@
 streamlit
+streamlit_option_menu
+streamlit_extras
+streamlit-cookies-manager
+pandas
+numpy
+plotly
+sqlalchemy
+psycopg2-binary  # If using PostgreSQL, otherwise change as needed
+sqlite  # If using SQLite
+deep-translator
+openai
+python-dotenv
+passlib
+flask
+flask-login
+flask-sqlalchemy
+flask-wtf
+wtforms
+werkzeug
+jwt
+secrets
+dateutil
+requests
