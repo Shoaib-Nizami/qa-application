@@ -4,7 +4,7 @@ streamlit_extras
 streamlit-cookies-manager
 pandas
 numpy
-plotly
+plotly==5.20.0
 sqlalchemy
 psycopg2-binary  # If using PostgreSQL, otherwise change as needed
 sqlite  # If using SQLite
