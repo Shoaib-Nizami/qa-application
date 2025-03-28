@@ -24,7 +24,7 @@ import re
 st.set_page_config(page_title="QA", page_icon="person-plus", layout="wide")
 
 
-import PyJWT as jwt
+import jwt
 import secrets
 from dotenv import load_dotenv
 from passlib.hash import pbkdf2_sha256 as sha256
